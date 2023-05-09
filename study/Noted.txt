@@ -1,0 +1,4 @@
+# Command start minikube 
+minikube start --addons ingress metrics-server --memory 4096 --cpus 4 --driver docker --network-plugin=cni --cni=calico
+
+#
