@@ -1,4 +1,22 @@
+# Disable Selinux
+
+# Install Docker 
+https://docs.docker.com/engine/install/centos/
+
+# Install k8s
+https://www.linuxtechi.com/install-minikube-on-rhel-rockylinux-almalinux/
+
+# Start minikube
+
+minikube start --memory 8192 --cpus 2 --driver docker --addons ingress
+
+kubectl get node minikube -o jsonpath='{.status.capacity}'
+
 # Command start minikube 
 minikube start --addons ingress metrics-server --memory 4096 --cpus 4 --driver docker --network-plugin=cni --cni=calico
 
-#
+# Helm Chart
+https://viblo.asia/p/su-dung-helm-chart-aWj53xgYK6m
+
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo add stable https://charts.helm.sh/stable --force-update
