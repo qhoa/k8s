@@ -43,7 +43,8 @@ service:
 ingress:
   enabled: true
   className: ""
-  annotations: {}
+  annotations: 
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
@@ -80,3 +81,7 @@ autoscaling:
 #tolerations: []
 
 #affinity: {}
+
+web:
+  webstorage: 20Gi
+  mountPath: /var/www/html
