@@ -1,0 +1,318 @@
+Built-in Objects
+Objects are passed into a template from the template engine. And your code can pass objects around (we'll see examples when we look at the with and range statements). There are even a few ways to create new objects within your templates, like with the tuple function we'll see later.
+
+Objects can be simple, and have just one value. Or they can contain other objects or functions. For example. the Release object contains several objects (like Release.Name) and the Files object has a few functions.
+
+In the previous section, we use {{ .Release.Name }} to insert the name of a release into a template. Release is one of the top-level objects that you can access in your templates.
+
+Release: This object describes the release itself. It has several objects inside of it:
+Release.Name: The release name
+Release.Namespace: The namespace to be released into (if the manifest doesn’t override)
+Release.IsUpgrade: This is set to true if the current operation is an upgrade or rollback.
+Release.IsInstall: This is set to true if the current operation is an install.
+Release.Revision: The revision number for this release. On install, this is 1, and it is incremented with each upgrade and rollback.
+Release.Service: The service that is rendering the present template. On Helm, this is always Helm.
+Values: Values passed into the template from the values.yaml file and from user-supplied files. By default, Values is empty.
+Chart: The contents of the Chart.yaml file. Any data in Chart.yaml will be accessible here. For example {{ .Chart.Name }}-{{ .Chart.Version }} will print out the mychart-0.1.0.
+The available fields are listed in the Charts Guide
+Files: This provides access to all non-special files in a chart. While you cannot use it to access templates, you can use it to access other files in the chart. See the section Accessing Files for more.
+Files.Get is a function for getting a file by name (.Files.Get config.ini)
+Files.GetBytes is a function for getting the contents of a file as an array of bytes instead of as a string. This is useful for things like images.
+Files.Glob is a function that returns a list of files whose names match the given shell glob pattern.
+Files.Lines is a function that reads a file line-by-line. This is useful for iterating over each line in a file.
+Files.AsSecrets is a function that returns the file bodies as Base 64 encoded strings.
+Files.AsConfig is a function that returns file bodies as a YAML map.
+Capabilities: This provides information about what capabilities the Kubernetes cluster supports.
+Capabilities.APIVersions is a set of versions.
+Capabilities.APIVersions.Has $version indicates whether a version (e.g., batch/v1) or resource (e.g., apps/v1/Deployment) is available on the cluster.
+Capabilities.KubeVersion and Capabilities.KubeVersion.Version is the Kubernetes version.
+Capabilities.KubeVersion.Major is the Kubernetes major version.
+Capabilities.KubeVersion.Minor is the Kubernetes minor version.
+Capabilities.HelmVersion is the object containing the Helm Version details, it is the same output of helm version
+Capabilities.HelmVersion.Version is the current Helm version in semver format.
+Capabilities.HelmVersion.GitCommit is the Helm git sha1.
+Capabilities.HelmVersion.GitTreeState is the state of the Helm git tree.
+Capabilities.HelmVersion.GoVersion is the version of the Go compiler used.
+Template: Contains information about the current template that is being executed
+Template.Name: A namespaced file path to the current template (e.g. mychart/templates/mytemplate.yaml)
+Template.BasePath: The namespaced path to the templates directory of the current chart (e.g. mychart/templates).
+The built-in values always begin with a capital letter. This is in keeping with Go's naming convention. When you create your own names, you are free to use a convention that suits your team. Some teams, like many whose charts you may see on Artifact Hub, choose to use only initial lower case letters in order to distinguish local names from those built-in. In this guide, we follow that convention.
+
+Values Files
+In the previous section we looked at the built-in objects that Helm templates offer. One of the built-in objects is Values. This object provides access to values passed into the chart. Its contents come from multiple sources:
+
+The values.yaml file in the chart
+If this is a subchart, the values.yaml file of a parent chart
+A values file if passed into helm install or helm upgrade with the -f flag (helm install -f myvals.yaml ./mychart)
+Individual parameters passed with --set (such as helm install --set foo=bar ./mychart)
+The list above is in order of specificity: values.yaml is the default, which can be overridden by a parent chart's values.yaml, which can in turn be overridden by a user-supplied values file, which can in turn be overridden by --set parameters.
+
+Values files are plain YAML files. Let's edit mychart/values.yaml and then edit our ConfigMap template.
+
+Removing the defaults in values.yaml, we'll set just one parameter:
+
+favoriteDrink: coffee
+Now we can use this inside of a template:
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-configmap
+data:
+  myvalue: "Hello World"
+  drink: {{ .Values.favoriteDrink }}
+Notice on the last line we access favoriteDrink as an attribute of Values: {{ .Values.favoriteDrink }}.
+
+Let's see how this renders.
+
+$ helm install geared-marsupi ./mychart --dry-run --debug
+install.go:158: [debug] Original chart version: ""
+install.go:175: [debug] CHART PATH: /home/bagratte/src/playground/mychart
+
+NAME: geared-marsupi
+LAST DEPLOYED: Wed Feb 19 23:21:13 2020
+NAMESPACE: default
+STATUS: pending-install
+REVISION: 1
+TEST SUITE: None
+USER-SUPPLIED VALUES:
+{}
+
+COMPUTED VALUES:
+favoriteDrink: coffee
+
+HOOKS:
+MANIFEST:
+---
+# Source: mychart/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: geared-marsupi-configmap
+data:
+  myvalue: "Hello World"
+  drink: coffee
+Because favoriteDrink is set in the default values.yaml file to coffee, that's the value displayed in the template. We can easily override that by adding a --set flag in our call to helm install:
+
+$ helm install solid-vulture ./mychart --dry-run --debug --set favoriteDrink=slurm
+install.go:158: [debug] Original chart version: ""
+install.go:175: [debug] CHART PATH: /home/bagratte/src/playground/mychart
+
+NAME: solid-vulture
+LAST DEPLOYED: Wed Feb 19 23:25:54 2020
+NAMESPACE: default
+STATUS: pending-install
+REVISION: 1
+TEST SUITE: None
+USER-SUPPLIED VALUES:
+favoriteDrink: slurm
+
+COMPUTED VALUES:
+favoriteDrink: slurm
+
+HOOKS:
+MANIFEST:
+---
+# Source: mychart/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: solid-vulture-configmap
+data:
+  myvalue: "Hello World"
+  drink: slurm
+Since --set has a higher precedence than the default values.yaml file, our template generates drink: slurm.
+
+Values files can contain more structured content, too. For example, we could create a favorite section in our values.yaml file, and then add several keys there:
+
+favorite:
+  drink: coffee
+  food: pizza
+Now we would have to modify the template slightly:
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-configmap
+data:
+  myvalue: "Hello World"
+  drink: {{ .Values.favorite.drink }}
+  food: {{ .Values.favorite.food }}
+While structuring data this way is possible, the recommendation is that you keep your values trees shallow, favoring flatness. When we look at assigning values to subcharts, we'll see how values are named using a tree structure.
+
+Deleting a default key
+If you need to delete a key from the default values, you may override the value of the key to be null, in which case Helm will remove the key from the overridden values merge.
+
+For example, the stable Drupal chart allows configuring the liveness probe, in case you configure a custom image. Here are the default values:
+
+livenessProbe:
+  httpGet:
+    path: /user/login
+    port: http
+  initialDelaySeconds: 120
+If you try to override the livenessProbe handler to exec instead of httpGet using --set livenessProbe.exec.command=[cat,docroot/CHANGELOG.txt], Helm will coalesce the default and overridden keys together, resulting in the following YAML:
+
+livenessProbe:
+  httpGet:
+    path: /user/login
+    port: http
+  exec:
+    command:
+    - cat
+    - docroot/CHANGELOG.txt
+  initialDelaySeconds: 120
+However, Kubernetes would then fail because you can not declare more than one livenessProbe handler. To overcome this, you may instruct Helm to delete the livenessProbe.httpGet by setting it to null:
+
+helm install stable/drupal --set image=my-registry/drupal:0.1.0 --set livenessProbe.exec.command=[cat,docroot/CHANGELOG.txt] --set livenessProbe.httpGet=null
+At this point, we've seen several built-in objects, and used them to inject information into a template. Now we will take a look at another aspect of the template engine: functions and pipelines.
+
+Template Functions and Pipelines
+So far, we've seen how to place information into a template. But that information is placed into the template unmodified. Sometimes we want to transform the supplied data in a way that makes it more useable to us.
+
+Let's start with a best practice: When injecting strings from the .Values object into the template, we ought to quote these strings. We can do that by calling the quote function in the template directive:
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-configmap
+data:
+  myvalue: "Hello World"
+  drink: {{ quote .Values.favorite.drink }}
+  food: {{ quote .Values.favorite.food }}
+Template functions follow the syntax functionName arg1 arg2.... In the snippet above, quote .Values.favorite.drink calls the quote function and passes it a single argument.
+
+Helm has over 60 available functions. Some of them are defined by the Go template language itself. Most of the others are part of the Sprig template library. We'll see many of them as we progress through the examples.
+
+While we talk about the "Helm template language" as if it is Helm-specific, it is actually a combination of the Go template language, some extra functions, and a variety of wrappers to expose certain objects to the templates. Many resources on Go templates may be helpful as you learn about templating.
+Pipelines
+One of the powerful features of the template language is its concept of pipelines. Drawing on a concept from UNIX, pipelines are a tool for chaining together a series of template commands to compactly express a series of transformations. In other words, pipelines are an efficient way of getting several things done in sequence. Let's rewrite the above example using a pipeline.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-configmap
+data:
+  myvalue: "Hello World"
+  drink: {{ .Values.favorite.drink | quote }}
+  food: {{ .Values.favorite.food | quote }}
+In this example, instead of calling quote ARGUMENT, we inverted the order. We "sent" the argument to the function using a pipeline (|): .Values.favorite.drink | quote. Using pipelines, we can chain several functions together:
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-configmap
+data:
+  myvalue: "Hello World"
+  drink: {{ .Values.favorite.drink | quote }}
+  food: {{ .Values.favorite.food | upper | quote }}
+Inverting the order is a common practice in templates. You will see .val | quote more often than quote .val. Either practice is fine.
+When evaluated, that template will produce this:
+
+# Source: mychart/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trendsetting-p-configmap
+data:
+  myvalue: "Hello World"
+  drink: "coffee"
+  food: "PIZZA"
+Note that our original pizza has now been transformed to "PIZZA".
+
+When pipelining arguments like this, the result of the first evaluation (.Values.favorite.drink) is sent as the last argument to the function. We can modify the drink example above to illustrate with a function that takes two arguments: repeat COUNT STRING:
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-configmap
+data:
+  myvalue: "Hello World"
+  drink: {{ .Values.favorite.drink | repeat 5 | quote }}
+  food: {{ .Values.favorite.food | upper | quote }}
+The repeat function will echo the given string the given number of times, so we will get this for output:
+
+# Source: mychart/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: melting-porcup-configmap
+data:
+  myvalue: "Hello World"
+  drink: "coffeecoffeecoffeecoffeecoffee"
+  food: "PIZZA"
+Using the default function
+One function frequently used in templates is the default function: default DEFAULT_VALUE GIVEN_VALUE. This function allows you to specify a default value inside of the template, in case the value is omitted. Let's use it to modify the drink example above:
+
+drink: {{ .Values.favorite.drink | default "tea" | quote }}
+If we run this as normal, we'll get our coffee:
+
+# Source: mychart/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: virtuous-mink-configmap
+data:
+  myvalue: "Hello World"
+  drink: "coffee"
+  food: "PIZZA"
+Now, we will remove the favorite drink setting from values.yaml:
+
+favorite:
+  #drink: coffee
+  food: pizza
+Now re-running helm install --dry-run --debug fair-worm ./mychart will produce this YAML:
+
+# Source: mychart/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fair-worm-configmap
+data:
+  myvalue: "Hello World"
+  drink: "tea"
+  food: "PIZZA"
+In an actual chart, all static default values should live in the values.yaml, and should not be repeated using the default command (otherwise they would be redundant). However, the default command is perfect for computed values, which cannot be declared inside values.yaml. For example:
+
+drink: {{ .Values.favorite.drink | default (printf "%s-tea" (include "fullname" .)) }}
+In some places, an if conditional guard may be better suited than default. We'll see those in the next section.
+
+Template functions and pipelines are a powerful way to transform information and then insert it into your YAML. But sometimes it's necessary to add some template logic that is a little more sophisticated than just inserting a string. In the next section we will look at the control structures provided by the template language.
+
+Using the lookup function
+The lookup function can be used to look up resources in a running cluster. The synopsis of the lookup function is lookup apiVersion, kind, namespace, name -> resource or resource list.
+
+parameter	type
+apiVersion	string
+kind	string
+namespace	string
+name	string
+Both name and namespace are optional and can be passed as an empty string ("").
+
+The following combination of parameters are possible:
+
+Behavior	Lookup function
+kubectl get pod mypod -n mynamespace	lookup "v1" "Pod" "mynamespace" "mypod"
+kubectl get pods -n mynamespace	lookup "v1" "Pod" "mynamespace" ""
+kubectl get pods --all-namespaces	lookup "v1" "Pod" "" ""
+kubectl get namespace mynamespace	lookup "v1" "Namespace" "" "mynamespace"
+kubectl get namespaces	lookup "v1" "Namespace" "" ""
+When lookup returns an object, it will return a dictionary. This dictionary can be further navigated to extract specific values.
+
+The following example will return the annotations present for the mynamespace object:
+
+(lookup "v1" "Namespace" "" "mynamespace").metadata.annotations
+When lookup returns a list of objects, it is possible to access the object list via the items field:
+
+{{ range $index, $service := (lookup "v1" "Service" "mynamespace" "").items }}
+    {{/* do something with each service */}}
+{{ end }}
+When no object is found, an empty value is returned. This can be used to check for the existence of an object.
+
+The lookup function uses Helm's existing Kubernetes connection configuration to query Kubernetes. If any error is returned when interacting with calling the API server (for example due to lack of permission to access a resource), helm's template processing will fail.
+
+Keep in mind that Helm is not supposed to contact the Kubernetes API Server during a helm template or a helm install|upgrade|delete|rollback --dry-run, so the lookup function will return an empty list (i.e. dict) in such a case.
+
+Operators are functions
+For templates, the operators (eq, ne, lt, gt, and, or and so on) are all implemented as functions. In pipelines, operations can be grouped with parentheses ((, and )).
+
+Now we can turn from functions and pipelines to flow control with conditions, loops, and scope modifiers.
