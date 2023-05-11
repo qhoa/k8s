@@ -5,10 +5,10 @@
 replicaCount: 1
 
 image:
-  repository: mysql
+  repository: mariadb
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: 5.6
+  tag: lastest
 
 imagePullSecrets: []
 nameOverride: ""
