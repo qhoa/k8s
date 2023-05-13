@@ -1,0 +1,355 @@
+Kubernetes | Collect Kubernetes metrics (Minikube's addon: 'metrics-server')
+Verify that 'metrics-server' addon is enabled
+Use Kubernetes Dashboard to visualize metrics
+Metrics API
+Use 'kubectl get' command to query the Metrics API
+Use 'kubectl top' command to display resources usage
+Use 'kubectl describe' command to display the resources allocated to a node
+Verify that 'metrics-server' addon is enabled
+Verify that 'metrics-server' addon is enabled:
+
+1
+$ minikube addons list | grep metrics-server
+
+1
+| metrics-server              | minikube | disabled     |
+
+Enable metrics-server addon (if disabled):
+
+1
+$ minikube addons enable metrics-server
+
+1
+🌟  The 'metrics-server' addon is enabled
+
+Verify that 'metrics-server' pod is running:
+
+1
+$ kubectl get pods --namespace kube-system | grep metrics-server
+
+1
+metrics-server-7bc6d75975-qwgxt    1/1     Running   0          17s
+Use Kubernetes Dashboard to visualize metrics
+Please see this page for details on how to configure Minikube dashboard: MiniKube dashboard
+
+Visualize Nodes metrics
+
+MiniKube dashboard - Nodes metrics
+
+Visualize Pods metrics
+
+MiniKube dashboard - Pods metrics
+
+Metrics API
+Check Metrics API version:
+
+1
+$ kubectl get --raw /apis/metrics.k8s.io/
+
+1
+{
+2
+  "kind": "APIGroup",
+3
+  "apiVersion": "v1",
+4
+  "name": "metrics.k8s.io",
+5
+  "versions": [
+6
+    {
+7
+      "groupVersion": "metrics.k8s.io/v1beta1",
+8
+      "version": "v1beta1"
+9
+    }
+10
+  ],
+11
+  "preferredVersion": {
+12
+    "groupVersion": "metrics.k8s.io/v1beta1",
+13
+    "version": "v1beta1"
+14
+  }
+15
+}
+
+Check available resources of the Metrics API:
+
+1
+$ kubectl get --raw /apis/metrics.k8s.io/v1beta1
+
+1
+{
+2
+  "kind": "APIResourceList",
+3
+  "apiVersion": "v1",
+4
+  "groupVersion": "metrics.k8s.io/v1beta1",
+5
+  "resources": [
+6
+    {
+7
+      "name": "nodes",
+8
+      "singularName": "",
+9
+      "namespaced": false,
+10
+      "kind": "NodeMetrics",
+11
+      "verbs": [
+12
+        "get",
+13
+        "list"
+14
+      ]
+15
+    },
+16
+    {
+17
+      "name": "pods",
+18
+      "singularName": "",
+19
+      "namespaced": true,
+20
+      "kind": "PodMetrics",
+21
+      "verbs": [
+22
+        "get",
+23
+        "list"
+24
+      ]
+25
+    }
+26
+  ]
+27
+}
+Use 'kubectl get' command to query the Metrics API
+Node metrics:
+
+To print node metrics, use the following command:
+kubectl get --raw /apis/metrics.k8s.io/v1beta1/nodes/<NODE_NAME>
+
+List existing nodes:
+
+1
+$ kubectl get nodes
+
+1
+NAME       STATUS   ROLES    AGE   VERSION
+2
+minikube   Ready    master   17h   v1.18.3
+
+Print Node metrics:
+
+1
+$ kubectl get --raw /apis/metrics.k8s.io/v1beta1/nodes/minikube
+
+1
+{
+2
+  "kind": "NodeMetrics",
+3
+  "apiVersion": "metrics.k8s.io/v1beta1",
+4
+  "metadata": {
+5
+    "name": "minikube",
+6
+    "selfLink": "/apis/metrics.k8s.io/v1beta1/nodes/minikube",
+7
+    "creationTimestamp": "19:29:54"
+8
+  },
+9
+  "timestamp": "19:29:00",
+10
+  "window": "1m0s",
+11
+  "usage": {
+12
+    "cpu": "239m",
+13
+    "memory": "1209836Ki"
+14
+  }
+15
+}
+
+Pod metrics:
+
+To print pod metrics, use the following command:
+kubectl get --raw /apis/metrics.k8s.io/v1beta1/namespaces/<NAMESPACE>/pods/<Pod_NAME>
+
+List existing Pods:
+
+1
+$ kubectl get pods --namespace kube-system | grep metrics-server
+
+1
+NAME                               READY   STATUS    RESTARTS   AGE
+2
+metrics-server-7bc6d75975-qwgxt    1/1     Running   0          3h29m
+
+Print Pod metrics:
+
+1
+$ kubectl get --raw /apis/metrics.k8s.io/v1beta1/namespaces/kube-system/pods/metrics-server-7bc6d75975-qwgxt
+
+1
+{
+2
+  "kind": "PodMetrics",
+3
+  "apiVersion": "metrics.k8s.io/v1beta1",
+4
+  "metadata": {
+5
+    "name": "metrics-server-7bc6d75975-qwgxt",
+6
+    "namespace": "kube-system",
+7
+    "selfLink": "/apis/metrics.k8s.io/v1beta1/namespaces/kube-system/pods/metrics-server-7bc6d75975-qwgxt",
+8
+    "creationTimestamp": "17:46:57"
+9
+  },
+10
+  "timestamp": "17:46:00",
+11
+  "window": "1m0s",
+12
+  "containers": [
+13
+    {
+14
+      "name": "metrics-server",
+15
+      "usage": {
+16
+        "cpu": "0",
+17
+        "memory": "11992Ki"
+18
+      }
+19
+    }
+20
+  ]
+21
+}
+Use 'kubectl top' command to display resources usage
+Print 'kubectl top' command help:
+
+1
+$ kubectl top --help
+
+1
+Display Resource (CPU/Memory/Storage) usage.
+2
+​
+3
+ The top command allows you to see the resource consumption for nodes or pods.
+4
+​
+5
+ This command requires Metrics Server to be correctly configured and working on the server.
+6
+​
+7
+Available Commands:
+8
+  node        Display Resource (CPU/Memory/Storage) usage of nodes
+9
+  pod         Display Resource (CPU/Memory/Storage) usage of pods
+10
+​
+11
+Usage:
+12
+  kubectl top [flags] [options]
+
+Print Node resources usage:
+
+1
+$ kubectl top node minikube
+
+1
+NAME       CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%
+2
+minikube   256m         6%     1156Mi          14%
+
+You can use the following command to display resources of all nodes:
+kubectl top node
+
+Print Pod resources usage:
+
+1
+$ kubectl top kube-system pod metrics-server-7bc6d75975-qwgxt --namespace
+
+1
+NAME                              CPU(cores)   MEMORY(bytes)
+2
+metrics-server-7bc6d75975-qwgxt   1m           11Mi
+
+You can use the following command to display resources of all pods:
+kubectl top --namespace kube-system
+
+You can use the option --containers to display resources of all containers of a pod:
+kubectl top pod metrics-server-7bc6d75975-qwgxt --containers --namespace kube-system
+Use 'kubectl describe' command to display the resources allocated to a node
+Print Node information:
+
+Name:               minikube
+Conditions:
+  Type             Status  Reason                       Message
+  ----             ------  ------                       -------
+  MemoryPressure   False   KubeletHasSufficientMemory   kubelet has sufficient memory available
+  DiskPressure     False   KubeletHasNoDiskPressure     kubelet has no disk pressure
+  PIDPressure      False   KubeletHasSufficientPID      kubelet has sufficient PID available
+  Ready            True    KubeletReady                 kubelet is posting ready status
+Capacity:
+  cpu:                4
+  ephemeral-storage:  9107004Ki
+  hugepages-2Mi:      0
+  memory:             8161508Ki
+  pods:               110
+Allocatable:
+  cpu:                4
+  ephemeral-storage:  9107004Ki
+  hugepages-2Mi:      0
+  memory:             8161508Ki
+  pods:               110
+Non-terminated Pods:          (10 in total)
+  Namespace                   Name                                         CPU Requests  CPU Limits  Memory Requests  Memory Limits  AGE
+  ---------                   ----                                         ------------  ----------  ---------------  -------------  ---
+  kube-system                 coredns-66bff467f8-d5tdc                     100m (2%)     0 (0%)      70Mi (0%)        170Mi (2%)     15h
+  kube-system                 etcd-minikube                                0 (0%)        0 (0%)      0 (0%)           0 (0%)         15h
+  kube-system                 kube-apiserver-minikube                      250m (6%)     0 (0%)      0 (0%)           0 (0%)         15h
+  kube-system                 kube-controller-manager-minikube             200m (5%)     0 (0%)      0 (0%)           0 (0%)         15h
+  kube-system                 kube-proxy-zzpnf                             0 (0%)        0 (0%)      0 (0%)           0 (0%)         15h
+  kube-system                 kube-scheduler-minikube                      100m (2%)     0 (0%)      0 (0%)           0 (0%)         15h
+  kube-system                 metrics-server-7bc6d75975-qwgxt              0 (0%)        0 (0%)      0 (0%)           0 (0%)         3h46m
+  kube-system                 storage-provisioner                          0 (0%)        0 (0%)      0 (0%)           0 (0%)         15h
+  kubernetes-dashboard        dashboard-metrics-scraper-dc6947fbf-46l94    0 (0%)        0 (0%)      0 (0%)           0 (0%)         14h
+  kubernetes-dashboard        kubernetes-dashboard-6dbb54fd95-fqqzm        0 (0%)        0 (0%)      0 (0%)           0 (0%)         14h
+Allocated resources:
+  (Total limits may be over 100 percent, i.e., overcommitted.)
+  Resource           Requests    Limits
+  --------           --------    ------
+  cpu                650m (16%)  0 (0%)
+  memory             70Mi (0%)   170Mi (2%)
+  ephemeral-storage  0 (0%)      0 (0%)
+  hugepages-2Mi      0 (0%)      0 (0%)

@@ -8,7 +8,8 @@ image:
   repository: wordpress
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: latest
+  tag: php8.1-apache
+
 
 imagePullSecrets: []
 nameOverride: ""
@@ -37,7 +38,7 @@ serviceAccount:
   # runAsUser: 1000
 
 service:
-  type: LoadBalancer
+  type: NodePort
   port: 80
 
 ingress:

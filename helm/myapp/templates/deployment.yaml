@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "myapp.fullname" . }}
+  labels:
+    app: {{ include "myapp.fullname" . }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ include "myapp.fullname" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "myapp.fullname" . }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "1000m"
+        env:
+          - name: WORDPRESS_DB_HOST
+            value: {{ .Values.database }}
+          - name: WORDPRESS_DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name : mysql-pass
+                key: password
+        ports:
+        - containerPort: {{ .Values.service.port }}
+        volumeMounts:
+          - name: {{ include "myapp.fullname" . }}
+            mountPath: /var/www/html
+      volumes:
+        - name: {{ include "myapp.fullname" . }}
+          persistentVolumeClaim:
+            claimName: {{ include "myapp.fullname" . }}
