@@ -33,5 +33,3 @@ metadata:
   creationTimestamp: "2023-05-09T14:19:38Z"
   name: coredns
   namespace: kube-system
-  resourceVersion: "269"
-  uid: 6b2b7412-c5af-4ac2-ac94-687986e1ea27
