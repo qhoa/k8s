@@ -8,7 +8,7 @@ image:
   repository: wordpress
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: php8.1-apache
+  tag: php8.0-apache
 
 
 imagePullSecrets: []
@@ -84,5 +84,5 @@ autoscaling:
 #affinity: {}
 
 web:
-  webstorage: 20Gi
+  webstorage: 800Gi
   mountPath: /var/www/html

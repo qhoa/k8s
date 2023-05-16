@@ -1,20 +1,26 @@
-{{- if .Values.rbac.create -}}
-{{- $fullName := include "elasticsearch.uname" . -}}
-apiVersion: rbac.authorization.k8s.io/v1
+{{- if .Values.podSecurityPolicy.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: RoleBinding
 metadata:
-  name: {{ $fullName | quote }}
+  name: {{ template "elasticsearch.fullname" . }}
   labels:
-    heritage: {{ .Release.Service | quote }}
-    release: {{ .Release.Name | quote }}
+    app: {{ template "elasticsearch.name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    app: {{ $fullName | quote }}
-subjects:
-  - kind: ServiceAccount
-    name: "{{ template "elasticsearch.serviceAccount" . }}"
-    namespace: {{ .Release.Namespace | quote }}
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
 roleRef:
   kind: Role
-  name: {{ $fullName | quote }}
+  name: {{ template "elasticsearch.fullname" . }}
   apiGroup: rbac.authorization.k8s.io
-{{- end -}}
+subjects:
+- kind: ServiceAccount
+  name: {{ template "elasticsearch.serviceAccountName.client" . }}
+  namespace: {{ .Release.Namespace }}
+- kind: ServiceAccount
+  name: {{ template "elasticsearch.serviceAccountName.data" . }}
+  namespace: {{ .Release.Namespace }}
+- kind: ServiceAccount
+  name: {{ template "elasticsearch.serviceAccountName.master" . }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}
+

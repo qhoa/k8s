@@ -84,6 +84,5 @@ autoscaling:
 database:
   dbuser: wp_user
   dbname: wordpress
-  dbstorage: 20Gi
+  dbstorage: 2Gi
   mountPath: /var/lib/mysql
-  password : 1234@1234

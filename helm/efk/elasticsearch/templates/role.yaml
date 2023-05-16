@@ -1,25 +1,17 @@
-{{- if .Values.rbac.create -}}
-{{- $fullName := include "elasticsearch.uname" . -}}
-apiVersion: rbac.authorization.k8s.io/v1
+{{- if .Values.podSecurityPolicy.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: Role
 metadata:
-  name: {{ $fullName | quote }}
+  name: {{ template "elasticsearch.fullname" . }}
   labels:
-    heritage: {{ .Release.Service | quote }}
-    release: {{ .Release.Name | quote }}
+    app: {{ template "elasticsearch.name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    app: {{ $fullName | quote }}
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
 rules:
-  - apiGroups:
-      - extensions
-    resources:
-      - podsecuritypolicies
-    resourceNames:
-      {{- if eq .Values.podSecurityPolicy.name "" }}
-      - {{ $fullName | quote }}
-      {{- else }}
-      - {{ .Values.podSecurityPolicy.name | quote }}
-      {{- end }}
-    verbs:
-      - use
-{{- end -}}
+- apiGroups: ['extensions']
+  resources: ['podsecuritypolicies']
+  verbs:     ['use']
+  resourceNames:
+  - {{ template "elasticsearch.fullname" . }}
+{{- end }}
