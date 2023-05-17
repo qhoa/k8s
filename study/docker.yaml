@@ -1,0 +1,174 @@
+Docker Tutorial: Freshers and Experienced
+1. Installation of Docker
+Command	Meaning	Syntax
+For Windows	This command helps you to install Docker on windows.	https://download.docker.com/win/stable/InstallDocker.msi
+For Linux	This command helps you to install Docker on Linux.	curl -sSL https://get.docker.com/ | sh
+For mac	This command helps you to install Docker on mac os.	https://download.docker.com/mac/stable/Docker.dmg
+2. Docker Registry and Repository
+Command	Meaning	Syntax
+Login to a Registry	This command helps you log in to your Registry.	
+docker login
+docker login localhost:8080
+Logout from a registry:	This command helps you log out from your Registry.	
+docker logout
+docker logout localhost:8080
+Searching an image	By using this docker command you can search any image from your docker.	
+search nginx
+docker search --filter stars=3 --no-trunc nginx
+Pulling an Image	This command can be used to download a specific image or set of images.	
+docker image pull nginx
+docker image pull eon01/nginx localhost:5000/myadmin/nginx
+Pushing an image	This command can be used to push a specific image or set of images.	
+docker image push eon01/nginx
+docker image push eon01/nginx localhost:5000/myadmin/nginx
+3. Running Containers
+Command	Meaning	Syntax
+Command to create a container	This command is used to create a container without running	
+docker container create -t -i eon01/infinite --name XYZ
+Command to run a container	This command is used to run a container	
+docker container run -it --name XYZ -d eon01/infinite
+Command to rename a container	Use this command to rename a container	
+docker container rename XYZ infinity
+Command for removing a container	This command is used to remove container in the topic	
+docker container rm infinite
+Update a container	This command is used to update container in the topic	
+docker container update --cpu-shares 512 -m 300M infinite
+You can download a PDF version of Docker Cheat Sheet.
+
+Download PDF
+
+4. Commands for Starting or Stopping the Container
+Command	Meaning	Syntax
+Command for starting a container	This command is used for starting a container 	
+docker container start nginx
+Command for stopping a container	This command is used for stopping a container	
+docker container stop nginx
+Command for restarting the container	This command is used for restarting a container	
+docker container restart nginx
+Command for pausing the container	This command is used for pausing a container	
+docker container pause nginx
+Command for unpausing the container	This command is used for unpausing a container in the docker 	
+docker container unpause nginx
+Command for Blocking a container	This command is used for blocking a container in the docker 	
+docker container wait nginx
+Sending a SIGKILL	This command is used for Sending a SIGKILL in the docker 	
+docker container kill nginx
+Command for sending another signal	This command is used for for sending another signal	
+docker container kill -s HUP nginx
+Command for Connecting to an Existing Container	We can use this command for Command for Connecting to an Existing Container	
+docker container attach nginx
+5. Commands for Obtaining Container Information
+Command	Meaning	Syntax
+Fetching information From Running Containers	We can fetch  information from running container by using this command	
+docker ps
+Or 
+
+docker container ls
+Command for fetching about every container	This command for fetching about every container	
+docker container ls -a
+Or
+
+docker ps -a
+Command for container log	We can use this command to see the container log	
+docker logs infinite
+Command for ‘tail -f’ Containers’ Logs	With this command Container isn't running in the foreground, and if there isn't anything running in the foreground, Docker closes automatically.	
+docker container logs infinite -f
+Command for Inspecting Containers
+
+
+ 
+
+This is the command use for inspecting containers	
+docker container inspect infinite
+
+docker container inspect --format '' $(docker ps -q)
+Command for Containers Events	To obtain real-time events from the server, use docker events.	
+docker system events infinite
+Command for Public Ports	Use this command for finding a public port	
+docker container port infinite
+Command for Running Processes	We can use this commands for displaying the running processes in the container	
+docker container top infinite
+Command for Container Resource Usage	It displays a live stream of resources usage statics  for containers	
+docker container stats infinite
+Commands for Inspecting changes to files or directories on a container’s filesystem	This command is used for inspecting changes to files or directories on a container’s filesystem 	
+docker container diff infinite
+6. Commands for Managing Images
+Command	Meaning 	Syntax 
+Commands for listing images	This command is used to listing images 	
+docker image ls
+Command for Building images From the current directory's Dockerfile	This command is used for building from the current directory’s dockerfile 	
+docker build 
+Command for Building images From a GIT remote repository	This command is used Building images command Using a remote GIT repository	
+docker build github.com/creack/docker-firefox
+Commands for tagging and building	This command for tagging and building.	
+docker build -t eon/infinite 
+Specifying the Build Context while creating a Dockerfile	This is use to Build an image from a Dockerfile	
+docker build -f myDockerfile
+Creating a Dockerfile from a URL	It wil help to create a dockerfile with a specific URL. 	
+curl example.com/remote/Dockerfile | docker build -f - 
+Command for removing image	This command is used to removing a7n image 	
+docker image rm nginx
+Using a File or the Normal Input Stream to Load a Tarred Repository	Use STDIN or a tar archive to load an image.	
+docker image load < ubuntu.tar.gz
+
+docker build -f myOtherDockerfile 
+Image Saving to a Tar Archiveard Input Stream	It is used Save one or more images to a tar archive	
+docker image save busybox > ubuntu.tar
+Showing the History of an Image	This command will let know the history of the image inside the docker	
+image history
+Making an Image Out of a Container	This command will help you to take an image out of the container	
+docker container commit nginx
+Command for image tagging	We can use this command for image tagging	
+docker image tag nginx eon01/nginx
+Command for pushing an image	We can push any image through this command	
+docker image push eon01/nginx
+7. Commands for Networking
+Command	Meaning	Syntax 
+Command for overlay network	This is used to establish a distributed network between many Docker daemon hosts.	
+docker network create -d overlay MyOverlayNetwork
+Command for Bridge network	To establish container test1 to bridge demo-bridge, type docker network connect demo-bridge test1.	
+docker network create -d bridge MyBridgeNetwork
+Command for removing a network	This command s used to remove an overlay network 	
+docker network rm MyOverlayNetwork
+Command for network listing	This command is used to listing the overlay networks	
+docker network ls
+Command for Getting Information About a Network	We can get information about an overlay network with the help of this command	
+docker network inspect MyOverlayNetwork
+Command for Connecting a Running Container to a Network	By using this command we can connect a container to network	
+docker network connect MyOverlayNetwork nginx
+Command for Connecting a Container to a Network When it Starts	When the container starts we can use this command to connect a container to network	
+docker container run -it -d --network=MyOverlayNetwork nginx
+Command for Disconnecting a Container from a Network	We can use this Command for disconnecting a container from network	
+docker network disconnect MyOverlayNetwork nginx
+Command for Exposing Ports	We can expose the empty ports using this command	
+EXPOSE <port_number>
+8. Commands for Cleaning Docker
+Command 	Meaning 	Syntax 
+Command for Removing a Running Container	We can remove a running container by using this command	
+docker container rm nginx
+Command for Removing a Container and its Volume	We  can use this command for removing the container and the things inside it	
+docker container rm -v nginx
+Command for Removing all Exited Containers	We can use this command for removing all the exited containers	
+docker container rm $(docker container ls -a -f status=exited -q)
+Command for Removing All Stopped Containers	We can remove all the stopped containers by using this command	
+docker container rm `docker container ls -a -q`
+Command for Removing a Docker Image	This command is used fr removing a docker image 	
+docker image rm nginx
+Command for Dangling Images	We can dangle the images with this command	
+docker image rm $(docker image ls -f dangling=true -q)
+Command for Removing all Images	We can remove all the image in the docker by using this commands	
+docker image rm $(docker image ls -a -q)
+Commands for Delete all Untagged Images	We can delete all the untagged images with the use of this command	
+docker image rm -f $(docker image ls | grep "^<none>" | awk "{print $3}")
+Command for Stopping & Removing all Containers	For stopping and removing all the container we can use this command	
+docker container stop $(docker container ls -a -q) && docker container rm $(docker container ls -a -q)
+Command for Removing Dangling Volumes	We can remove all the dangling volumes by using this command	
+docker volume rm $(docker volume ls -f dangling=true -q)
+Command for removing all unneeded (containers, images, networks and volumes)	This command is use to remove the unnecessary thing 	
+docker system prune -f
+Command for Clean all	We cam use this command for cleaning everything in the docker	
+docker system prune -a
+Conclusion
+You should have a solid knowledge of what Docker is and how it operates by this point. Docker's finest feature is cooperation. Docker images may be uploaded to a repo and then downloaded to any other server to execute containers. Furthermore, the Docker hub has hundreds of images developed by users, which you may download down to your servers depending on your specific application. It is also often used throughout container orchestration technologies such as Kubernetes.
+
+Docker is one of the greatest production technologies available today, and its demand is expanding rapidly. It is considered ideal for larger businesses, and because it is open-source, it is a versatile platform that can be used to construct a wide range of applications.

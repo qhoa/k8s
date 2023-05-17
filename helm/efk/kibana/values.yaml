@@ -50,7 +50,7 @@ deployment:
   annotations: {}
 
 service:
-  type: ClusterIP
+  type: NodePort
   # clusterIP: None
   # portName: kibana-svc
   externalPort: 443

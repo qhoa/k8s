@@ -1,3 +1,5 @@
+https://devopscube.com/setup-efk-stack-on-kubernetes/
+
 Centralized Logging EFK — Helm (Elasticsearch, Fluentd, Kibana)
 
 Rajpratap Singh
@@ -76,3 +78,203 @@ Now search:- fluentd-pvc-test in Kibana search box.
 
 Conclusion ->
 Ending this blog here as beginners can use the above-mentioned steps to deploy an EFK stack from scratch & monitor K8’s logs.
+
+Setup Fluent Bit with Elasticsearch Authentication enabled in Kubernetes - Part 3
+Posted in Cloud   LAST UPDATED: AUGUST 21, 2021
+  Table of Contents
+In this tutorial we will learn how to configure Fluent Bit service for log aggregation with Elasticsearch service, where JSON format logs are stored in Elasticsearch in which authentication is enabled so we will have to configure Fluent Bit to use Elasticsearch username and password while pushing logs to Elasticsearch.
+
+The main aim of this tutorial is to configure Fluent Bit to user Elasticsearch username and password. This tutorial is a continuation to the series, where we have setup Elasticsearch cluster and Kibana with X-Pack security enabled.
+
+Setup Elasticsearch cluster with X-Pack enabled
+
+Setup Kibana with Elasticsearch with X-Pack enabled
+
+Here is the complete project with all the YAMLs - EFK setup Github Repository
+
+Before going ahead with this tutorial, you must follow the first two tutorials of this series, atleast the Elasticsearch setup because we created Kubernetes secret in that tutorial, which we will be using in this tutorial to get the password of the Elasticsearch username.
+
+Setup Fluent Bit Service
+Fluent bit will start as a daemonset which will run on every node of your Kubernetes cluster.
+
+We will define a configmap for fluent bit service to configure INPUT, PARSER, OUTPUT, etc for Fluent Bit so that it tails logs from log files, and then save it into Elasticsearch.
+
+For allowing fluent bit to access pods in the Kubernetes cluster, we will define clusterrole, a service account for fluent bit and then a cluster role binding between the cluster role and the service account. So let's get started.
+
+fb-role.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: fluent-bit-read
+rules:
+- apiGroups: [""]
+  resources:
+  - namespaces
+  - pods
+  verbs: ["get", "list", "watch"]
+fb-service.yaml
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fluent-bit
+  namespace: logging
+fb-rolebind.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: fluent-bit-read
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: fluent-bit-read
+subjects:
+- kind: ServiceAccount
+  name: fluent-bit
+  namespace: logging
+Now we will define the configmap with all the configurations.
+
+fb-configmap.yaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluent-bit-config
+  namespace: logging
+  labels:
+    k8s-app: fluent-bit
+data:
+  # Configuration files: server, input, filters and output
+  # ======================================================
+  fluent-bit.conf: |
+    [SERVICE]
+        Flush         1
+        Log_Level     info
+        Daemon        off
+        Parsers_File  parsers.conf
+        HTTP_Server   On
+        HTTP_Listen   0.0.0.0
+        HTTP_Port     2020
+    @INCLUDE input-kubernetes.conf
+    @INCLUDE filter-kubernetes.conf
+    @INCLUDE output-elasticsearch.conf
+  input-kubernetes.conf: |
+    [INPUT]
+        Name              tail
+        Tag               kube.*
+        Path              /var/log/containers/*.log
+        Parser            json
+        DB                /var/log/flb_kube.db
+        Mem_Buf_Limit     5MB
+        Skip_Long_Lines   Off
+        Refresh_Interval  10
+  output-elasticsearch.conf: |
+    [OUTPUT]
+        Name            es
+        Match           *
+        Host            ${FLUENT_ELASTICSEARCH_HOST}
+        Port            ${FLUENT_ELASTICSEARCH_PORT}
+        HTTP_User       ${FLUENT_ELASTICSEARCH_USER}
+        HTTP_Passwd     ${FLUENT_ELASTICSEARCH_PASSWD}
+        Logstash_Format On
+        Logstash_Prefix myindex
+        Replace_Dots    On
+        Retry_Limit     False
+  parsers.conf: |
+    [PARSER]
+        Name   json
+        Format json
+        Time_Key instant
+        Time_Format %Y-%m-%d %H:%M:%S.%L
+        Time_Keep On
+As you can see in the OUTPUT configuration, we have used the elasticsearch plugin and there we have used the ${FLUENT_ELASTICSEARCH_HOST}, ${FLUENT_ELASTICSEARCH_PORT}, ${FLUENT_ELASTICSEARCH_USER} and ${FLUENT_ELASTICSEARCH_PASSWD} which we will define in the daemonset for fluent bit.
+
+fb-ds.yaml
+
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluent-bit
+  namespace: logging
+  labels:
+    k8s-app: fluent-bit-logging
+    version: v1
+    kubernetes.io/cluster-service: "true"
+spec:
+  selector:
+    matchLabels:
+      k8s-app: fluent-bit-logging
+  template:
+    metadata:
+      labels:
+        k8s-app: fluent-bit-logging
+        version: v1
+        kubernetes.io/cluster-service: "true"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "2020"
+        prometheus.io/path: /api/v1/metrics/prometheus
+    spec:
+      containers:
+      - name: fluent-bit
+        image: fluent/fluent-bit:1.3.9
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 2020
+        env:
+        - name: FLUENT_ELASTICSEARCH_HOST
+          value: "elasticsearch-client"
+        - name: FLUENT_ELASTICSEARCH_PORT
+          value: "9200"
+        - name: FLUENT_ELASTICSEARCH_USER
+          value: "elastic"
+        - name: FLUENT_ELASTICSEARCH_PASSWD
+          valueFrom:
+            secretKeyRef:
+              name: elasticsearch-pw-elastic
+              key: password
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        - name: fluent-bit-config
+          mountPath: /fluent-bit/etc/
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+      - name: fluent-bit-config
+        configMap:
+          name: fluent-bit-config
+      serviceAccountName: fluent-bit
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      - operator: "Exists"
+        effect: "NoExecute"
+      - operator: "Exists"
+        effect: "NoSchedule"
+In the above YAML we have specified the docker image URL, its version, various environment variables, etc.
+
+Now that we have all the YAMLs ready, all we have to do is apply them all. Just run the following command for it:
+
+kubectl apply  -f fb-role.yaml \
+-f fb-rolebind.yaml \
+-f fb-service.yaml \
+-f fb-configmap.yaml \
+-f fb-ds.yaml
+This will start fluent bit service as daemonset in all the nodes of the Kubernetes cluster.
+
+If you have followed all the steps then your EFK setup should start working with Fluent Bit collecting and storing logs in Elasticsearch and Kibana using the Elasticsearch data and showing it on the Kibana UI.
+
+Conclusion:
+EFK stands for Elasticsearch, Kibana and Fluent Bit or Fluentd, while we also have more services for log collection and aggregation, these two are the most popular ones. In this three-part series, we learned how to setup Elasticsearch cluster with X-Pack security, along with Kibana UI and Fluent Bit service for log collection.
