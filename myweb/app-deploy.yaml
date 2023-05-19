@@ -15,15 +15,19 @@ spec:
     spec:
       containers:
       - name: wordpress
-        image: qhoa83/testing:latest
+        image: wordpress:4.8-apache
         resources:
           limits:
             memory: "512Mi"
             cpu: "1000m"
         env:
-          - name: WORDPRESS_DB_HOST
+          - name: WP_DB_NAME
+            value: wp-db
+          - name: WP_DB_USER
+            value: wp-user
+          - name: WP_DB_HOST
             value: db-sc
-          - name: WORDPRESS_DB_PASSWORD
+          - name: WP_DB_PASSWORD
             valueFrom:
               secretKeyRef:
                 name : mysql-pass

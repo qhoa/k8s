@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-sc
+spec:
+  selector:
+    app: mysql
+  ports:
+  - port: 3306
+#  clusterIP: None
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wp-sc
+spec:
+  selector:
+    app: wordpress
+  ports:
+  - port: 80
+  type: LoadBalancer  
