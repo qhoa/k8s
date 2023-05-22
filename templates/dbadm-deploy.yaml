@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phpmyadmin
+  labels:
+    app: phpmyadmin
+spec:
+  selector:
+    matchLabels:
+      app: phpmyadmin
+  template:
+    metadata:
+      labels:
+        app: phpmyadmin
+    spec:
+      containers:
+      - name: phpmyadmin
+        image: phpmyadmin
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        env:
+          - name: PMA_HOST
+            value: db-sc
+          - name: PMA_USER
+            value: root
+          - name: PMA_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name : mysql-pass
+                key: password
+        ports:
+        - containerPort: 80
+          name: phpmyadmin
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dbadm-sc
+spec:
+  selector:
+    app: phpmyadmin
+  ports:
+  - port: 80
+    targetPort: 80
+  type: LoadBalancer

@@ -13,6 +13,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: wp-sc
+                name: wp-web
                 port:
                   number: 80

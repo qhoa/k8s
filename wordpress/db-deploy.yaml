@@ -1,38 +1,47 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mysql
+  name: mariadb
   labels:
-    app: mysql
+    app: mariadb
 spec:
   selector:
     matchLabels:
-      app: mysql
+      app: mariadb
   template:
     metadata:
       labels:
-        app: mysql
+        app: mariadb
     spec:
       containers:
-      - name: mysql
-        image: mysql:5.6
+      - name: mariadb
+        image: mariadb:latest
         resources:
           limits:
             memory: "512Mi"
             cpu: "1000m"        
-        env:        
+        env:
+          - name: MYSQL_DATABASE
+            value: wordpress
+          - name: MYSQL_USER
+            value: wp-user
+          - name: MYSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mariadb-pass
+                key: password        
           - name: MYSQL_ROOT_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: mysql-pass
+                name: mariadb-pass
                 key: password
         volumeMounts:
-            - name: mysql-persistent-storage
+            - name: mariadb-ps-storage
               mountPath: /var/lib/mysql
         ports:
         - containerPort: 3306
-          name: mysql
+          name: mariadb
       volumes:
-          - name: mysql-persistent-storage
+          - name: mariadb-ps-storage
             persistentVolumeClaim:
-             claimName: mysql-pv-claim
+             claimName: mariadb-pv-claim
