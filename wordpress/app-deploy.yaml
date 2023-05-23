@@ -35,9 +35,13 @@ spec:
         ports:
         - containerPort: 80
           name: wordpress
+#        lifecycle:
+#          postStart:
+#            exec:
+#              command: ["git", "clone", "https://github.com/qhoa/wp.git", "/app"]
         volumeMounts:
           - name: wordpress-ps-storage
-            mountPath: /tmp
+            mountPath: "/app"
       volumes:
         - name: wordpress-ps-storage
           persistentVolumeClaim:
