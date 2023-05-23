@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: phpmyadmin
-        image: phpmyadmin
+        image: qhoa83/php-apache
         resources:
           limits:
             memory: "512Mi"
@@ -25,7 +25,7 @@ spec:
             value: root
           - name: PMA_HOST
             value: wp-db
-          - name: PMA_PASSWORD
+          - name: PMA_PASS
             valueFrom:
               secretKeyRef:
                 name : mariadb-pass
@@ -33,7 +33,7 @@ spec:
         ports:
         - containerPort: 80
           name: phpmyadmin
-#        lifecycle:
-#          postStart:
-#            exec:
-#              command: ["git", "clone", "https://github.com/qhoa/wp.git", "/app"]
+        lifecycle:
+          postStart:
+            exec:
+              command: ["git", "clone", "https://github.com/qhoa/code.git", "phymyadmin", "/app"]
