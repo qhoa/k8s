@@ -1,39 +1,41 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: phpmyadmin
+  name: guestbook
   labels:
-    app: phpmyadmin
+    app: guestbook
 spec:
   selector:
     matchLabels:
-      app: phpmyadmin
+      app: guestbook
   template:
     metadata:
       labels:
-        app: phpmyadmin
+        app: guestbook
     spec:
       containers:
-      - name: phpmyadmin
-        image: phpmyadmin
+      - name: guestbook
+        image: guestbook
         resources:
           limits:
             memory: "512Mi"
             cpu: "500m"
         env:
-          - name: PMA_USER
+          - name: DB_USER
             value: root
-          - name: PMA_HOST
+          - name: DB_NAME
+            value: guestbook  
+          - name: DB_HOST
             value: wp-db
-          - name: PMA_PASSWORD
+          - name: DB_PASS
             valueFrom:
               secretKeyRef:
                 name : mariadb-pass
                 key: password
         ports:
         - containerPort: 80
-          name: phpmyadmin
-#        lifecycle:
-#          postStart:
-#            exec:
-#              command: ["git", "clone", "https://github.com/qhoa/code.git", "myweb"]
+          name: guestbook
+        lifecycle:
+          postStart:
+            exec:
+              command: ["git", "clone", "https://github.com/qhoa/guestbook.git", "."]
