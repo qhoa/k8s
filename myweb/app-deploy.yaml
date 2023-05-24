@@ -32,6 +32,7 @@ spec:
               secretKeyRef:
                 name : mariadb-pass
                 key: password
+                namespace: wordpress
         ports:
         - containerPort: 80
           name: guestbook
