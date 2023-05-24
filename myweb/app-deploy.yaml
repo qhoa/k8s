@@ -28,11 +28,7 @@ spec:
           - name: DB_HOST
             value: wp-db.wordpress.svc.cluster.local
           - name: DB_PASS
-            valueFrom:
-              secretKeyRef:
-                name : mariadb-pass
-                key: password
-                namespace: wordpress
+            value: test1234
         ports:
         - containerPort: 80
           name: guestbook
