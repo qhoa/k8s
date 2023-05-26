@@ -14,7 +14,7 @@ kubectl get node minikube -o jsonpath='{.status.capacity}'
 
 # Command start minikube 
 minikube start --addons ingress metrics-server --memory 8192 --cpus 4 --driver docker --network-plugin=cni --cni=calico
-minikube start --addons ingress metrics-server --memory 8192 --cpus 4 --driver docker --network-plugin=cni --cni=calico
+minikube start --addons ingress --memory 10240 --cpus 8 --driver docker --network-plugin=cni --cni=calico --apiserver-ips=10.253.245.10
 
 # Helm Chart
 https://viblo.asia/p/su-dung-helm-chart-aWj53xgYK6m

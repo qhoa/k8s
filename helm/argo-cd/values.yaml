@@ -1830,30 +1830,30 @@ server:
     # -- Automount API credentials for the Service Account
     automountServiceAccountToken: true
 
-  ingress:
-    # -- Enable an ingress resource for the Argo CD server
-    enabled: true
+#  ingress:
+#    # -- Enable an ingress resource for the Argo CD server
+#    enabled: true
     # -- Additional ingress annotations
-    annotations: {}
+#    annotations: {}
     # -- Additional ingress labels
-    labels: {}
+#    labels: {}
     # -- Defines which ingress controller will implement the resource
-    ingressClassName: ""
+#    ingressClassName: ""
 
     # -- List of ingress hosts
     ## Argo Ingress.
     ## Hostnames must be provided if Ingress is enabled.
     ## Secrets must be manually created in the namespace
-    hosts: 
-        argocd.local
+#    hosts: 
+#        argocd.local
 
     # -- List of ingress paths
-    paths:
-      - /
+#    paths:
+#      - /
     # -- Ingress path type. One of `Exact`, `Prefix` or `ImplementationSpecific`
-    pathType: Prefix
+#    pathType: Prefix
     # -- Additional ingress paths
-    extraPaths: []
+#    extraPaths: []
       # - path: /*
       #   pathType: Prefix
       #   backend:
@@ -1863,13 +1863,13 @@ server:
       #         name: use-annotation
 
     # -- Ingress TLS configuration
-    tls: []
+#    tls: []
       # - secretName: your-certificate-name
       #   hosts:
       #     - argocd.example.com
 
     # -- Uses `server.service.servicePortHttps` instead `server.service.servicePortHttp`
-    https: false
+#    https: false
 
   # dedicated ingress for gRPC as documented at
   # Ref: https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/
